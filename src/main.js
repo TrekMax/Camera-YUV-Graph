@@ -11,6 +11,7 @@ app.innerHTML = `
       <span>看懂一帧图像</span>
     </a>
     <nav class="nav" aria-label="章节导航">
+      <a href="#glossary">名词</a>
       <a href="#channels">通道</a>
       <a href="#sampling">采样</a>
       <a href="#layouts">布局</a>
@@ -56,6 +57,68 @@ app.innerHTML = `
       <div><span>02</span><p><b>Chroma sampling</b><br>决定色度分辨率</p></div><i>→</i>
       <div><span>03</span><p><b>Memory layout</b><br>决定字节地址</p></div><i>→</i>
       <div><span>04</span><p><b>Matrix + pack</b><br>还原并压入 RGB</p></div>
+    </section>
+
+    <section class="glossary section-shell" id="glossary">
+      <div class="glossary-heading reveal">
+        <div class="eyebrow"><span></span> BEFORE WE START · GLOSSARY</div>
+        <h2>先读懂四个词，<br><em>再去看 bytes。</em></h2>
+        <p>Chroma 描述“存什么颜色信息”；Planar、Semi-planar 与 Packed 描述“这些信息在内存里怎么排”。</p>
+      </div>
+
+      <div class="term-grid reveal">
+        <article class="term-card chroma-card">
+          <div class="term-top"><span>00 · SIGNAL</span><b>颜色信息</b></div>
+          <h3>Chroma <small>/ˈkroʊmə/ · 色度</small></h3>
+          <p>在数字 YUV 中，Chroma 通常指 <strong>U/Cb 与 V/Cr 两路色差信号</strong>。它们告诉系统颜色相对亮度偏蓝多少、偏红多少，而明暗细节主要由 Y 保存。</p>
+          <div class="chroma-equation">
+            <div><i class="term-y">Y</i><span>亮度 / 细节</span></div>
+            <b>+</b>
+            <div><i class="term-u">Cb</i><span>蓝色色差</span></div>
+            <b>+</b>
+            <div><i class="term-v">Cr</i><span>红色色差</span></div>
+          </div>
+          <div class="term-note"><b>为什么能少采？</b><span>人眼对 Chroma 的空间细节不如对亮度敏感，所以 4:2:2、4:2:0 会让多个 Y 共享色度样本。8-bit 数据中，U/V≈128 通常表示中性色差。</span></div>
+        </article>
+
+        <article class="term-card">
+          <div class="term-top"><span>01 · LAYOUT</span><b>3 PLANES</b></div>
+          <h3>Planar <small>平面式</small></h3>
+          <p>Y、U、V 各占一块独立且连续的内存区域。处理某个通道很直接，但必须分别维护 plane 地址与 stride。</p>
+          <div class="mini-memory planar-memory" aria-label="Planar 内存示意">
+            <div><i>Y</i><i>Y</i><i>Y</i><i>Y</i></div>
+            <div><i>U</i><i>U</i></div>
+            <div><i>V</i><i>V</i></div>
+          </div>
+          <span class="term-example">I420: Y → U → V　·　YV12: Y → V → U</span>
+        </article>
+
+        <article class="term-card">
+          <div class="term-top"><span>02 · LAYOUT</span><b>2 PLANES</b></div>
+          <h3>Semi-planar <small>半平面式</small></h3>
+          <p>Y 保持独立；U 与 V 合并到第二个 plane，并按样本交错。<strong>“Semi” 指组织方式，不表示分辨率减半。</strong></p>
+          <div class="mini-memory semi-memory" aria-label="Semi-planar 内存示意">
+            <div><i>Y</i><i>Y</i><i>Y</i><i>Y</i></div>
+            <div><i>U</i><i>V</i><i>U</i><i>V</i></div>
+          </div>
+          <span class="term-example">NV12: UV UV…　·　NV21: VU VU…</span>
+        </article>
+
+        <article class="term-card">
+          <div class="term-top"><span>03 · LAYOUT</span><b>1 PLANE</b></div>
+          <h3>Packed <small>打包式</small></h3>
+          <p>Y、U、V 全部混排在同一条 byte stream 中，通常按两个像素为一组读取。不能把某一路当作连续数组。</p>
+          <div class="mini-memory packed-memory" aria-label="Packed 内存示意">
+            <div><i>Y0</i><i>U0</i><i>Y1</i><i>V0</i><i>Y2</i><i>U1</i><i>Y3</i><i>V1</i></div>
+          </div>
+          <span class="term-example">YUYV: Y0 U0 Y1 V0　·　UYVY: U0 Y0 V0 Y1</span>
+        </article>
+      </div>
+
+      <div class="glossary-rule reveal">
+        <span>不要混淆</span>
+        <p><b>4:2:0 / 4:2:2</b> 决定 Chroma 采样数量；<b>Planar / Semi-planar / Packed</b> 决定样本的内存排列。</p>
+      </div>
     </section>
 
     <section class="lesson section-shell" id="channels">
